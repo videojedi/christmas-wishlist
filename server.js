@@ -71,6 +71,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   const existing = db.prepare('SELECT id FROM recipients WHERE email = ?').get(email);
   if (existing) {
+    console.log(`[AUTH] Registration failed - email already exists: ${email}`);
     return res.status(400).json({ error: 'Email already registered' });
   }
 
@@ -79,6 +80,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   db.prepare('INSERT INTO recipients (id, email, name, password_hash) VALUES (?, ?, ?, ?)')
     .run(id, email, name, passwordHash);
+
+  console.log(`[AUTH] New user registered: ${name} (${email})`);
 
   const token = jwt.sign({ id, email, name }, JWT_SECRET, { expiresIn: '7d' });
   res.cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
@@ -94,13 +97,17 @@ app.post('/api/auth/login', async (req, res) => {
 
   const user = db.prepare('SELECT * FROM recipients WHERE email = ?').get(email);
   if (!user) {
+    console.log(`[AUTH] Login failed - user not found: ${email}`);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
+    console.log(`[AUTH] Login failed - wrong password: ${email}`);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  console.log(`[AUTH] User logged in: ${user.name} (${email})`);
 
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
   res.cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
@@ -146,6 +153,8 @@ app.post('/api/wishlists', authMiddleware, (req, res) => {
 
   db.prepare('INSERT INTO wishlists (id, recipient_id, title, share_token, end_date) VALUES (?, ?, ?, ?, ?)')
     .run(id, req.user.id, title, shareToken, endDate);
+
+  console.log(`[WISHLIST] Created: "${title}" by ${req.user.name} (token: ${shareToken})`);
 
   const wishlist = db.prepare('SELECT * FROM wishlists WHERE id = ?').get(id);
   res.json(wishlist);
@@ -235,6 +244,8 @@ app.post('/api/wishlists/:wishlistId/items', authMiddleware, (req, res) => {
   db.prepare('INSERT INTO items (id, wishlist_id, name, description, link) VALUES (?, ?, ?, ?, ?)')
     .run(id, wishlist.id, name, description || null, link || null);
 
+  console.log(`[ITEM] Added: "${name}" to "${wishlist.title}" by ${req.user.name}`);
+
   const item = db.prepare('SELECT * FROM items WHERE id = ?').get(id);
   res.json(item);
 });
@@ -284,8 +295,11 @@ app.get('/api/shared/:shareToken', (req, res) => {
     .get(req.params.shareToken);
 
   if (!wishlist) {
+    console.log(`[GIFTER] Wishlist not found: ${req.params.shareToken}`);
     return res.status(404).json({ error: 'Wishlist not found' });
   }
+
+  console.log(`[GIFTER] Viewing wishlist: "${wishlist.title}" for ${wishlist.recipient_name}`);
 
   const pastEndDate = isPastEndDate(wishlist.end_date);
 
@@ -395,6 +409,10 @@ app.post('/api/shared/:shareToken/claim/:itemId', (req, res) => {
   const claimId = uuidv4();
   db.prepare('INSERT INTO claims (id, item_id, gifter_id) VALUES (?, ?, ?)')
     .run(claimId, item.id, gifter.id);
+
+  // Get item name for logging
+  const itemForLog = db.prepare('SELECT i.name as item_name, w.title as wishlist_title, r.name as recipient_name FROM items i JOIN wishlists w ON i.wishlist_id = w.id JOIN recipients r ON w.recipient_id = r.id WHERE i.id = ?').get(item.id);
+  console.log(`[CLAIM] ${gifter_name} claimed "${itemForLog.item_name}" from "${itemForLog.wishlist_title}" (for ${itemForLog.recipient_name})`);
 
   res.json({ message: 'Item claimed successfully!' });
 });
