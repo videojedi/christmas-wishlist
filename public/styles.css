@@ -97,6 +97,23 @@ nav {
   background: #218838;
 }
 
+.btn-icon {
+  padding: 6px 10px;
+  font-size: 16px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  min-width: auto;
+}
+
+.btn-icon:hover {
+  background: #e9ecef;
+}
+
+.btn-icon-danger:hover {
+  background: #ffebee;
+  border-color: #ffcdd2;
+}
+
 /* Auth Section */
 #auth-section {
   max-width: 400px;
@@ -615,13 +632,13 @@ nav {
   }
 
   .item-actions {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
   }
 
-  .item-actions .btn {
-    width: 100%;
-    padding: 10px;
+  .item-actions .btn-icon {
+    width: auto;
+    padding: 8px 12px;
   }
 
   .gifter-item-card {

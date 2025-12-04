@@ -287,8 +287,8 @@ async function loadWishlistDetail(wishlistId) {
             ${claimHtml}
             ${!wishlist.past_end_date ? `
               <div class="item-actions">
-                <button class="btn btn-secondary" onclick="openEditItemModal('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.description || '').replace(/'/g, "\\'")}', '${escapeHtml(item.link || '').replace(/'/g, "\\'")}')">Edit</button>
-                <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Delete</button>
+                <button class="btn btn-icon" onclick="openEditItemModal('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.description || '').replace(/'/g, "\\'")}', '${escapeHtml(item.link || '').replace(/'/g, "\\'")}')">✏️</button>
+                <button class="btn btn-icon btn-icon-danger" onclick="deleteItem('${item.id}')">🗑️</button>
               </div>
             ` : ''}
           </div>
