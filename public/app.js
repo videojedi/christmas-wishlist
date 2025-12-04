@@ -275,17 +275,17 @@ async function loadWishlistDetail(wishlistId) {
     } else {
       container.innerHTML = wishlist.items.map(item => {
         let claimHtml = '';
-        if (showAsEnded && item.claim) {
+        if (wishlist.past_end_date && item.claim) {
           claimHtml = `<div class="claim-info">🎁 Claimed by ${escapeHtml(item.claim.gifter_name)}</div>`;
         }
 
         return `
-          <div class="item-card ${(showAsEnded && item.claim) ? 'claimed' : ''}">
+          <div class="item-card ${(wishlist.past_end_date && item.claim) ? 'claimed' : ''}">
             <h4>${escapeHtml(item.name)}</h4>
             ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
             ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank">View Link →</a>` : ''}
             ${claimHtml}
-            ${!showAsEnded ? `
+            ${!wishlist.past_end_date ? `
               <div class="item-actions">
                 <button class="btn btn-secondary" onclick="openEditItemModal('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}', '${escapeHtml(item.description || '').replace(/'/g, "\\'")}', '${escapeHtml(item.link || '').replace(/'/g, "\\'")}')">Edit</button>
                 <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Delete</button>
@@ -296,8 +296,8 @@ async function loadWishlistDetail(wishlistId) {
       }).join('');
     }
 
-    // Hide add button after end date or in preview
-    document.getElementById('add-item-btn').style.display = showAsEnded ? 'none' : 'block';
+    // Hide add button after end date
+    document.getElementById('add-item-btn').style.display = wishlist.past_end_date ? 'none' : 'block';
 
   } catch (err) {
     alert('Failed to load wishlist');
