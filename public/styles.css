@@ -379,6 +379,36 @@ nav {
   font-size: 14px;
 }
 
+/* Gifter claim status styles */
+.gifter-item-card.claimed-by-me {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+}
+
+.gifter-item-card.claimed-by-other {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+  opacity: 0.7;
+}
+
+.claim-status {
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.claim-status.claim-mine {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.claim-status.claim-other {
+  background: #eeeeee;
+  color: #757575;
+}
+
 /* Thank You Section */
 #thank-you-section {
   background: #fff9c4;

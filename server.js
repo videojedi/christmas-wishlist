@@ -289,17 +289,31 @@ app.get('/api/shared/:shareToken', (req, res) => {
 
   const pastEndDate = isPastEndDate(wishlist.end_date);
 
-  // Get all items
+  // Get all items with claim info
   const allItems = db.prepare('SELECT * FROM items WHERE wishlist_id = ? ORDER BY created_at')
     .all(wishlist.id);
 
-  // Get claimed item IDs
-  const claimedItemIds = db.prepare(`
-    SELECT item_id FROM claims WHERE item_id IN (${allItems.map(() => '?').join(',')})
-  `).all(...allItems.map(i => i.id)).map(c => c.item_id);
+  // Get claims with gifter info for all items
+  const itemsWithClaims = allItems.map(item => {
+    const claim = db.prepare(`
+      SELECT c.*, g.name as gifter_name, g.email as gifter_email
+      FROM claims c
+      JOIN gifters g ON c.gifter_id = g.id
+      WHERE c.item_id = ?
+    `).get(item.id);
 
-  // Filter out claimed items for gifters (they shouldn't see what others have claimed)
-  const availableItems = allItems.filter(item => !claimedItemIds.includes(item.id));
+    if (claim) {
+      return {
+        ...item,
+        claimed: true,
+        claimed_by_name: claim.gifter_name,
+        claimed_by_email: claim.gifter_email || null
+      };
+    }
+    return { ...item, claimed: false };
+  });
+
+  const claimedCount = itemsWithClaims.filter(i => i.claimed).length;
 
   res.json({
     id: wishlist.id,
@@ -307,10 +321,31 @@ app.get('/api/shared/:shareToken', (req, res) => {
     recipient_name: wishlist.recipient_name,
     end_date: wishlist.end_date,
     past_end_date: pastEndDate,
-    items: pastEndDate ? [] : availableItems, // No items visible after end date
+    items: pastEndDate ? [] : itemsWithClaims,
     total_items: allItems.length,
-    claimed_count: claimedItemIds.length
+    claimed_count: claimedCount
   });
+});
+
+// Check if an item is still available (for race condition prevention)
+app.get('/api/shared/:shareToken/check/:itemId', (req, res) => {
+  const wishlist = db.prepare('SELECT * FROM wishlists WHERE share_token = ?')
+    .get(req.params.shareToken);
+
+  if (!wishlist) {
+    return res.status(404).json({ error: 'Wishlist not found' });
+  }
+
+  const item = db.prepare('SELECT * FROM items WHERE id = ? AND wishlist_id = ?')
+    .get(req.params.itemId, wishlist.id);
+
+  if (!item) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  const existingClaim = db.prepare('SELECT * FROM claims WHERE item_id = ?').get(item.id);
+
+  res.json({ available: !existingClaim });
 });
 
 // Claim an item as a gifter

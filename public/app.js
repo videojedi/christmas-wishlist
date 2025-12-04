@@ -510,37 +510,103 @@ async function loadGifterWishlist() {
     if (wishlist.items.length === 0) {
       itemsContainer.innerHTML = `
         <div class="empty-state">
-          <p>All items have been claimed! 🎉</p>
-          <p>${wishlist.claimed_count} of ${wishlist.total_items} items claimed</p>
+          <p>No items on this wishlist yet.</p>
         </div>
       `;
       return;
     }
 
+    // Get saved gifter info from localStorage
+    const savedGifter = localStorage.getItem('gifter_info');
+    let myName = null;
+    let myEmail = null;
+    if (savedGifter) {
+      const parsed = JSON.parse(savedGifter);
+      myName = parsed.name || null;
+      myEmail = parsed.email || null;
+    }
+
+    const availableCount = wishlist.items.filter(i => !i.claimed).length;
+
+    // Sort items: unclaimed first, then claimed
+    const sortedItems = [...wishlist.items].sort((a, b) => {
+      if (a.claimed === b.claimed) return 0;
+      return a.claimed ? 1 : -1;
+    });
+
     itemsContainer.innerHTML = `
       <div class="stats">
-        <span>${wishlist.items.length} items still available</span>
+        <span>${availableCount} items still available</span>
         <span>${wishlist.claimed_count} already claimed</span>
       </div>
-      ${wishlist.items.map(item => `
-        <div class="gifter-item-card">
-          <div class="gifter-item-info">
-            <h4>${escapeHtml(item.name)}</h4>
-            ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-            ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank">View Link →</a>` : ''}
-          </div>
-          <button class="btn btn-success" onclick="openClaimModal('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}')">
+      ${sortedItems.map(item => {
+        // Determine claim status for this gifter
+        let claimStatus = 'available';
+        if (item.claimed) {
+          // Check if this gifter claimed it (match by name or email)
+          const nameMatch = myName && item.claimed_by_name &&
+            item.claimed_by_name.toLowerCase() === myName.toLowerCase();
+          const emailMatch = myEmail && item.claimed_by_email &&
+            item.claimed_by_email.toLowerCase() === myEmail.toLowerCase();
+
+          if (nameMatch || emailMatch) {
+            claimStatus = 'claimed_by_me';
+          } else {
+            claimStatus = 'claimed_by_other';
+          }
+        }
+
+        let statusHtml = '';
+        let buttonHtml = '';
+        let cardClass = 'gifter-item-card';
+
+        if (claimStatus === 'claimed_by_me') {
+          cardClass += ' claimed-by-me';
+          statusHtml = '<div class="claim-status claim-mine">✓ You\'re getting this!</div>';
+        } else if (claimStatus === 'claimed_by_other') {
+          cardClass += ' claimed-by-other';
+          statusHtml = '<div class="claim-status claim-other">Already claimed by someone else</div>';
+        } else {
+          buttonHtml = `<button class="btn btn-success" onclick="openClaimModal('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}')">
             I'll Get This
-          </button>
-        </div>
-      `).join('')}
+          </button>`;
+        }
+
+        return `
+          <div class="${cardClass}">
+            <div class="gifter-item-info">
+              <h4>${escapeHtml(item.name)}</h4>
+              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+              ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank">View Link →</a>` : ''}
+              ${statusHtml}
+            </div>
+            ${buttonHtml}
+          </div>
+        `;
+      }).join('')}
     `;
   } catch (err) {
     document.getElementById('gifter-header').innerHTML = '<h2>Error loading wishlist</h2>';
   }
 }
 
-function openClaimModal(itemId, itemName) {
+async function openClaimModal(itemId, itemName) {
+  // Check if item is still available before opening modal
+  try {
+    const res = await fetch(`/api/shared/${shareToken}/check/${itemId}`);
+    const data = await res.json();
+
+    if (!data.available) {
+      alert('Sorry, this item has already been claimed by someone else.');
+      loadGifterWishlist();
+      return;
+    }
+  } catch (err) {
+    alert('Error checking item availability. Please refresh the page.');
+    loadGifterWishlist();
+    return;
+  }
+
   document.getElementById('claim-item-id').value = itemId;
   document.getElementById('claim-item-name').textContent = `Claiming: ${itemName}`;
 
