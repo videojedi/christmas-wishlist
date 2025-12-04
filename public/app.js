@@ -3,7 +3,6 @@ let currentUser = null;
 let currentWishlist = null;
 let isGifterView = false;
 let shareToken = null;
-let previewMode = false;
 
 // DOM Elements
 const authSection = document.getElementById('auth-section');
@@ -243,34 +242,22 @@ document.getElementById('new-wishlist-form').addEventListener('submit', async (e
 // Load Wishlist Detail
 async function loadWishlistDetail(wishlistId) {
   try {
-    const res = await fetch(`/api/wishlists/${wishlistId}${previewMode ? '?preview=1' : ''}`);
+    const res = await fetch(`/api/wishlists/${wishlistId}`);
     const wishlist = await res.json();
     currentWishlist = wishlist;
 
-    // Use previewMode to simulate past_end_date
-    const showAsEnded = wishlist.past_end_date || previewMode;
-
     document.getElementById('wishlist-title-display').textContent = wishlist.title;
     document.getElementById('wishlist-end-date-display').textContent = `Ends: ${formatDate(wishlist.end_date)}`;
-
-    // Update preview button text
-    const previewBtn = document.getElementById('preview-toggle-btn');
-    if (wishlist.past_end_date) {
-      previewBtn.style.display = 'none';
-    } else {
-      previewBtn.style.display = 'block';
-      previewBtn.textContent = previewMode ? 'Exit Preview' : 'Preview After End Date';
-    }
 
     // Share link
     const shareLink = `${window.location.origin}/gift/${wishlist.share_token}`;
     document.getElementById('share-link').value = shareLink;
 
-    // Thank you section (only visible after end date or in preview)
+    // Thank you section (only visible after end date)
     const thankYouSection = document.getElementById('thank-you-section');
     const itemsSection = document.getElementById('items-section');
 
-    if (showAsEnded) {
+    if (wishlist.past_end_date) {
       thankYouSection.style.display = 'block';
       loadThankYouList(wishlistId);
     } else {
@@ -318,14 +305,6 @@ async function loadWishlistDetail(wishlistId) {
   }
 }
 
-// Preview toggle
-document.getElementById('preview-toggle-btn').addEventListener('click', () => {
-  previewMode = !previewMode;
-  if (currentWishlist) {
-    loadWishlistDetail(currentWishlist.id);
-  }
-});
-
 // Edit Wishlist
 document.getElementById('edit-wishlist-btn').addEventListener('click', () => {
   if (currentWishlist) {
@@ -362,7 +341,7 @@ document.getElementById('edit-wishlist-form').addEventListener('submit', async (
 // Thank You List
 async function loadThankYouList(wishlistId) {
   try {
-    const res = await fetch(`/api/wishlists/${wishlistId}/thankyou${previewMode ? '?preview=1' : ''}`);
+    const res = await fetch(`/api/wishlists/${wishlistId}/thankyou`);
     const data = await res.json();
 
     const container = document.getElementById('thank-you-list');
