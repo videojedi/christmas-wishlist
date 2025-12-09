@@ -465,7 +465,18 @@ async function loadGifterWishlist() {
   try {
     const res = await fetch(`/api/shared/${shareToken}`);
     if (!res.ok) {
-      document.getElementById('gifter-header').innerHTML = '<h2>Wishlist not found</h2>';
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        // Owner trying to view their own shared link
+        document.getElementById('gifter-header').innerHTML = `
+          <h2>🎁 No Peeking!</h2>
+          <p style="margin-top: 10px;">You can't view your own wishlist as a gifter - that would spoil the surprise!</p>
+          <p style="margin-top: 10px;"><a href="/" class="btn btn-primary">Go to My Wishlists</a></p>
+        `;
+        document.getElementById('gifter-items-container').innerHTML = '';
+      } else {
+        document.getElementById('gifter-header').innerHTML = '<h2>Wishlist not found</h2>';
+      }
       return;
     }
 

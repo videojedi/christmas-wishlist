@@ -299,6 +299,20 @@ app.get('/api/shared/:shareToken', (req, res) => {
     return res.status(404).json({ error: 'Wishlist not found' });
   }
 
+  // Check if the logged-in user is the wishlist owner (prevent spoilers!)
+  const token = req.cookies.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded.id === wishlist.recipient_id) {
+        console.log(`[GIFTER] Blocked owner from viewing own shared list: ${decoded.name}`);
+        return res.status(403).json({ error: 'You cannot view your own wishlist as a gifter - no peeking at surprises!' });
+      }
+    } catch (err) {
+      // Invalid token, proceed as anonymous gifter
+    }
+  }
+
   console.log(`[GIFTER] Viewing wishlist: "${wishlist.title}" for ${wishlist.recipient_name}`);
 
   const pastEndDate = isPastEndDate(wishlist.end_date);
