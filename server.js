@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const db = new Database(path.join(__dirname, 'wishlist.db'));
@@ -33,9 +34,29 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// Serve index.html for gifter route (SPA)
+// Serve index.html for gifter route (SPA) with dynamic OG tags
 app.get('/gift/:shareToken', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const wishlist = db.prepare('SELECT w.*, r.name as recipient_name FROM wishlists w JOIN recipients r ON w.recipient_id = r.id WHERE w.share_token = ?')
+    .get(req.params.shareToken);
+
+  // Read the index.html file
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  if (wishlist) {
+    // Escape quotes for safe HTML attribute values
+    const escapeAttr = (str) => str.replace(/"/g, '&quot;');
+
+    const title = escapeAttr(`${wishlist.recipient_name}'s Christmas Wishlist`);
+    const description = escapeAttr(`Help ${wishlist.recipient_name} have a wonderful Christmas! View their wishlist "${wishlist.title}" and claim a gift.`);
+
+    // Replace default OG tags with dynamic ones
+    html = html.replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${title}">`);
+    html = html.replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${description}">`);
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+  }
+
+  res.send(html);
 });
 
 // Auth middleware for recipients
