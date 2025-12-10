@@ -43,6 +43,14 @@ app.get('/gift/:shareToken', (req, res) => {
   const indexPath = path.join(__dirname, 'public', 'index.html');
   let html = fs.readFileSync(indexPath, 'utf8');
 
+  // Build the full URL for OG image
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+  const baseUrl = `${protocol}://${host}`;
+
+  // Replace OG image with full URL
+  html = html.replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${baseUrl}/og-image.png">`);
+
   if (wishlist) {
     // Escape quotes for safe HTML attribute values
     const escapeAttr = (str) => str.replace(/"/g, '&quot;');
