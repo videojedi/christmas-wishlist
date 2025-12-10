@@ -1,5 +1,7 @@
 # Christmas Wishlist
 
+![Christmas Wishlist](public/og-image.png)
+
 A web app for managing Christmas wish lists with gift coordination between recipients and gifters.
 
 ## Features
