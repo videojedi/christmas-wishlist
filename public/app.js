@@ -790,6 +790,10 @@ function renderDashboardVisitedWishlists() {
 
 // Remove a wishlist from visited list
 function removeVisitedWishlist(token) {
+  if (!confirm('Are you sure you want to remove this wishlist from your list?')) {
+    return;
+  }
+
   const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
   const filtered = visited.filter(w => w.token !== token);
   localStorage.setItem('visited_wishlists', JSON.stringify(filtered));
