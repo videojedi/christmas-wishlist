@@ -778,11 +778,9 @@ function renderDashboardVisitedWishlists() {
   section.style.display = 'block';
 
   container.innerHTML = visited.map(w => `
-    <div class="wishlist-card" style="cursor: pointer;">
-      <div onclick="window.location.href='/gift/${w.token}'">
-        <h3>${escapeHtml(w.recipientName)}'s Wishlist</h3>
-        <p>${escapeHtml(w.title)}</p>
-      </div>
+    <div class="wishlist-card" style="cursor: pointer;" onclick="window.location.href='/gift/${w.token}'">
+      <h3>${escapeHtml(w.recipientName)}'s Wishlist</h3>
+      <p>${escapeHtml(w.title)}</p>
       <button class="btn btn-link" onclick="event.stopPropagation(); removeVisitedWishlist('${w.token}')">Remove</button>
     </div>
   `).join('');
