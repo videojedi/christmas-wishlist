@@ -70,6 +70,7 @@ function showDashboard() {
   document.getElementById('logout-btn').style.display = 'block';
   document.getElementById('user-info').textContent = `Welcome, ${currentUser.name}`;
   loadWishlists();
+  renderDashboardVisitedWishlists();
 }
 
 function showWishlistDetail(wishlistId) {
@@ -709,11 +710,37 @@ function renderVisitedWishlists() {
   }).join('');
 }
 
-// Handle wishlist selection change
+// Handle wishlist selection change (gifter view)
 document.getElementById('visited-wishlists-select').addEventListener('change', (e) => {
   const newToken = e.target.value;
   if (newToken && newToken !== shareToken) {
     window.location.href = `/gift/${newToken}`;
+  }
+});
+
+// Render visited wishlists dropdown on dashboard
+function renderDashboardVisitedWishlists() {
+  const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
+  const container = document.getElementById('dashboard-visited-wishlists-container');
+  const select = document.getElementById('dashboard-visited-wishlists-select');
+
+  if (visited.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  select.innerHTML = '<option value="">Select a wishlist...</option>' + visited.map(w => {
+    return `<option value="${w.token}">${w.recipientName}'s List: ${w.title}</option>`;
+  }).join('');
+}
+
+// Handle wishlist selection change (dashboard)
+document.getElementById('dashboard-visited-wishlists-select').addEventListener('change', (e) => {
+  const token = e.target.value;
+  if (token) {
+    window.location.href = `/gift/${token}`;
   }
 });
 
