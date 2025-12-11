@@ -79,6 +79,18 @@ nav {
   padding: 5px;
 }
 
+.back-link {
+  display: inline-block;
+  color: #c0392b;
+  text-decoration: none;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
 .btn-danger {
   background: #dc3545;
   color: white;

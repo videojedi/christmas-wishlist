@@ -89,11 +89,22 @@ function showWishlistDetail(wishlistId) {
   loadWishlistDetail(wishlistId);
 }
 
-function showGifterView() {
+async function showGifterView() {
   hideAllSections();
   gifterSection.style.display = 'block';
   document.getElementById('logout-btn').style.display = 'none';
   document.getElementById('user-info').textContent = '';
+
+  // Check if logged in and show back link
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      document.getElementById('gifter-back-link').style.display = 'inline-block';
+    }
+  } catch (err) {
+    // Not logged in
+  }
+
   loadGifterWishlist();
 }
 
