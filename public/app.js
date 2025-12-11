@@ -89,23 +89,47 @@ function showWishlistDetail(wishlistId) {
   loadWishlistDetail(wishlistId);
 }
 
+let isLoggedInGifter = false;
+
 async function showGifterView() {
   hideAllSections();
   gifterSection.style.display = 'block';
   document.getElementById('logout-btn').style.display = 'none';
   document.getElementById('user-info').textContent = '';
 
-  // Check if logged in and show back link
+  // Check if logged in and show back link (or remove button if not logged in)
   try {
     const res = await fetch('/api/auth/me');
     if (res.ok) {
+      isLoggedInGifter = true;
       document.getElementById('gifter-back-link').style.display = 'inline-block';
+      document.getElementById('gifter-remove-btn').style.display = 'none';
+    } else {
+      isLoggedInGifter = false;
+      renderGifterRemoveButton();
     }
   } catch (err) {
-    // Not logged in
+    isLoggedInGifter = false;
+    renderGifterRemoveButton();
   }
 
   loadGifterWishlist();
+}
+
+// Show remove button in gifter view for non-logged-in users
+function renderGifterRemoveButton() {
+  const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
+  const isInList = visited.some(w => w.token === shareToken);
+  const removeBtn = document.getElementById('gifter-remove-btn');
+
+  if (isInList && !isLoggedInGifter) {
+    removeBtn.style.display = 'inline-block';
+    removeBtn.onclick = () => {
+      removeVisitedWishlist(shareToken);
+    };
+  } else {
+    removeBtn.style.display = 'none';
+  }
 }
 
 // Auth Tab Switching
@@ -507,6 +531,7 @@ async function loadGifterWishlist() {
     // Save this wishlist to visited list in localStorage
     saveVisitedWishlist(shareToken, wishlist.title, wishlist.recipient_name);
     renderVisitedWishlists();
+    renderGifterRemoveButton();
 
     document.getElementById('gifter-wishlist-title').textContent = wishlist.title;
     document.getElementById('gifter-recipient-name').textContent = `For: ${wishlist.recipient_name}`;
@@ -753,11 +778,29 @@ function renderDashboardVisitedWishlists() {
   section.style.display = 'block';
 
   container.innerHTML = visited.map(w => `
-    <div class="wishlist-card" onclick="window.location.href='/gift/${w.token}'" style="cursor: pointer;">
-      <h3>${escapeHtml(w.recipientName)}'s Wishlist</h3>
-      <p>${escapeHtml(w.title)}</p>
+    <div class="wishlist-card" style="cursor: pointer;">
+      <div onclick="window.location.href='/gift/${w.token}'">
+        <h3>${escapeHtml(w.recipientName)}'s Wishlist</h3>
+        <p>${escapeHtml(w.title)}</p>
+      </div>
+      <button class="btn btn-link" onclick="event.stopPropagation(); removeVisitedWishlist('${w.token}')">Remove</button>
     </div>
   `).join('');
+}
+
+// Remove a wishlist from visited list
+function removeVisitedWishlist(token) {
+  const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
+  const filtered = visited.filter(w => w.token !== token);
+  localStorage.setItem('visited_wishlists', JSON.stringify(filtered));
+
+  // Re-render the appropriate view
+  if (isGifterView) {
+    renderVisitedWishlists();
+    renderGifterRemoveButton();
+  } else {
+    renderDashboardVisitedWishlists();
+  }
 }
 
 // Close modals on outside click
