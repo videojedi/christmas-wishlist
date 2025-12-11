@@ -482,6 +482,10 @@ async function loadGifterWishlist() {
 
     const wishlist = await res.json();
 
+    // Save this wishlist to visited list in localStorage
+    saveVisitedWishlist(shareToken, wishlist.title, wishlist.recipient_name);
+    renderVisitedWishlists();
+
     document.getElementById('gifter-wishlist-title').textContent = wishlist.title;
     document.getElementById('gifter-recipient-name').textContent = `For: ${wishlist.recipient_name}`;
     document.getElementById('gifter-end-date').textContent = `Gift by: ${formatDate(wishlist.end_date)}`;
@@ -663,6 +667,55 @@ function formatDate(dateStr) {
     year: 'numeric'
   });
 }
+
+// ============ VISITED WISHLISTS ============
+
+function saveVisitedWishlist(token, title, recipientName) {
+  const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
+
+  // Remove if already exists (we'll re-add to update and move to top)
+  const filtered = visited.filter(w => w.token !== token);
+
+  // Add to beginning of list
+  filtered.unshift({
+    token,
+    title,
+    recipientName,
+    visitedAt: new Date().toISOString()
+  });
+
+  // Keep only last 10 wishlists
+  const trimmed = filtered.slice(0, 10);
+
+  localStorage.setItem('visited_wishlists', JSON.stringify(trimmed));
+}
+
+function renderVisitedWishlists() {
+  const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
+  const container = document.getElementById('visited-wishlists-container');
+  const select = document.getElementById('visited-wishlists-select');
+
+  // Only show if there's more than 1 visited wishlist
+  if (visited.length <= 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  select.innerHTML = visited.map(w => {
+    const selected = w.token === shareToken ? 'selected' : '';
+    return `<option value="${w.token}" ${selected}>${w.recipientName}'s List: ${w.title}</option>`;
+  }).join('');
+}
+
+// Handle wishlist selection change
+document.getElementById('visited-wishlists-select').addEventListener('change', (e) => {
+  const newToken = e.target.value;
+  if (newToken && newToken !== shareToken) {
+    window.location.href = `/gift/${newToken}`;
+  }
+});
 
 // Close modals on outside click
 document.querySelectorAll('.modal').forEach(modal => {
