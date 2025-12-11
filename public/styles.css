@@ -74,9 +74,14 @@ nav {
 
 .btn-link {
   background: none;
-  color: #fff;
-  text-decoration: underline;
+  color: #c0392b;
+  text-decoration: none;
   padding: 5px;
+  font-size: 14px;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
 }
 
 .back-link {
