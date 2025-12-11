@@ -742,8 +742,9 @@ function renderVisitedWishlists() {
   const container = document.getElementById('visited-wishlists-container');
   const select = document.getElementById('visited-wishlists-select');
 
-  // Only show if there's more than 1 visited wishlist
-  if (visited.length <= 1) {
+  // Don't show dropdown for logged-in users (they have back button and dashboard)
+  // Only show if there's more than 1 visited wishlist and user is not logged in
+  if (visited.length <= 1 || isLoggedInGifter) {
     container.style.display = 'none';
     return;
   }
