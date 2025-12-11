@@ -718,31 +718,26 @@ document.getElementById('visited-wishlists-select').addEventListener('change', (
   }
 });
 
-// Render visited wishlists dropdown on dashboard
+// Render visited wishlists list on dashboard
 function renderDashboardVisitedWishlists() {
   const visited = JSON.parse(localStorage.getItem('visited_wishlists') || '[]');
-  const container = document.getElementById('dashboard-visited-wishlists-container');
-  const select = document.getElementById('dashboard-visited-wishlists-select');
+  const section = document.getElementById('other-wishlists-section');
+  const container = document.getElementById('other-wishlists-container');
 
   if (visited.length === 0) {
-    container.style.display = 'none';
+    section.style.display = 'none';
     return;
   }
 
-  container.style.display = 'block';
+  section.style.display = 'block';
 
-  select.innerHTML = '<option value="">Select a wishlist...</option>' + visited.map(w => {
-    return `<option value="${w.token}">${w.recipientName}'s List: ${w.title}</option>`;
-  }).join('');
+  container.innerHTML = visited.map(w => `
+    <div class="wishlist-card" onclick="window.location.href='/gift/${w.token}'" style="cursor: pointer;">
+      <h3>${escapeHtml(w.recipientName)}'s Wishlist</h3>
+      <p>${escapeHtml(w.title)}</p>
+    </div>
+  `).join('');
 }
-
-// Handle wishlist selection change (dashboard)
-document.getElementById('dashboard-visited-wishlists-select').addEventListener('change', (e) => {
-  const token = e.target.value;
-  if (token) {
-    window.location.href = `/gift/${token}`;
-  }
-});
 
 // Close modals on outside click
 document.querySelectorAll('.modal').forEach(modal => {
