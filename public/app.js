@@ -25,11 +25,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
 
   // Home link - go back to dashboard
-  document.getElementById('home-link').addEventListener('click', (e) => {
+  document.getElementById('home-link').addEventListener('click', async (e) => {
     e.preventDefault();
     if (currentUser) {
       currentWishlist = null;
       showDashboard();
+    } else {
+      // Check if logged in (might be viewing as gifter but still logged in)
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          window.location.href = '/';
+        }
+      } catch (err) {
+        // Not logged in, do nothing
+      }
     }
   });
 });
