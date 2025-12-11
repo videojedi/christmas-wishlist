@@ -12,19 +12,7 @@ const gifterSection = document.getElementById('gifter-section');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check if this is a shared link
-  const path = window.location.pathname;
-  if (path.startsWith('/gift/')) {
-    shareToken = path.replace('/gift/', '');
-    isGifterView = true;
-    showGifterView();
-    return;
-  }
-
-  // Check if user is logged in
-  await checkAuth();
-
-  // Home link - go back to dashboard
+  // Home link - go back to dashboard (set up first, before any early returns)
   document.getElementById('home-link').addEventListener('click', async (e) => {
     e.preventDefault();
     if (currentUser) {
@@ -42,6 +30,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
   });
+
+  // Check if this is a shared link
+  const path = window.location.pathname;
+  if (path.startsWith('/gift/')) {
+    shareToken = path.replace('/gift/', '');
+    isGifterView = true;
+    showGifterView();
+    return;
+  }
+
+  // Check if user is logged in
+  await checkAuth();
 });
 
 // Auth check
