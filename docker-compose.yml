@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  wishlist:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
+      - DB_PATH=/data/wishlist.db
+    volumes:
+      - wishlist-data:/data
+    restart: unless-stopped
+
+volumes:
+  wishlist-data:

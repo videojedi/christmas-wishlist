@@ -8,7 +8,8 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const db = new Database(path.join(__dirname, 'wishlist.db'));
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'wishlist.db');
+const db = new Database(dbPath);
 const JWT_SECRET = process.env.JWT_SECRET || 'christmas-secret-change-in-production';
 
 // Word lists for generating memorable share tokens
